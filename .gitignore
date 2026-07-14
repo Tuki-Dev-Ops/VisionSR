@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Model weights — fetched via scripts/download_weights.py
+ai/checkpoints/**
+!ai/checkpoints/.gitkeep
+!ai/checkpoints/registry.lock.json
+*.pth
+*.onnx
+*.engine
+*.safetensors
+
+# Datasets
+ai/datasets/**
+!ai/datasets/.gitkeep
+
+# Test images. Not vendored, for the same reason the weights are not: they are
+# third-party photographs carrying their own terms. scripts/download_assets.py fetches
+# them, and the tests that need them skip cleanly when they are absent.
+tests/assets/**
+!tests/assets/.gitkeep
+
+# Frozen backend + installer output
+dist/
+build/
+desktop/release/
+
+# Runtime artifacts
+storage/
+outputs/
+*.log
+
+# Node
+node_modules/
+.next/
+out/
+dist-electron/
+desktop/dist/
+desktop/release/
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "visionsr"
+version = "0.1.0"
+description = "Enterprise AI super resolution, restoration and enhancement engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+
+dependencies = [
+    "numpy>=1.26",
+    "pillow>=10.3",
+    "opencv-python-headless>=4.10",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "typer>=0.12",
+    "rich>=13.7",
+    "httpx>=0.27",
+    "tqdm>=4.66",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "aiofiles>=23.2",
+]
+onnx = [
+    "onnx>=1.16",
+    "onnxruntime>=1.18",
+]
+directml = ["onnxruntime-directml>=1.18"]
+openvino = ["openvino>=2024.2"]
+metrics = ["lpips>=0.1.4", "scikit-image>=0.24"]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+[project.scripts]
+visionsr = "visionsr.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ai/visionsr"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+# B008: FastAPI's Depends()/File()/Form() defaults are the documented idiom.
+# E501: line length is enforced by the formatter, not the linter.
+ignore = ["B008", "E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["visionsr", "backend"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

@@ -1,0 +1,47 @@
+{
+  "face-detector": {
+    "filename": "face_detection_yunet_2023mar.onnx",
+    "sha256": "8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4",
+    "url": "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
+  },
+  "gfpgan-v1.4": {
+    "filename": "GFPGANv1.4.pth",
+    "sha256": "e2cd4703ab14f4d01fd1383a8a8b266f9a5833dacee8e6a79d3bf21a1b6be5ad",
+    "url": "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+  },
+  "isnet-general": {
+    "filename": "isnet-general-use.onnx",
+    "sha256": "60920e99c45464f2ba57bee2ad08c919a52bbf852739e96947fbb4358c0d964a",
+    "url": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx"
+  },
+  "realesr-animevideov3": {
+    "filename": "realesr-animevideov3.pth",
+    "sha256": "b8a8376811077954d82ca3fcf476f1ac3da3e8a68a4f4d71363008000a18b75d",
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth"
+  },
+  "realesr-general-x4v3": {
+    "filename": "realesr-general-x4v3.pth",
+    "sha256": "8dc7edb9ac80ccdc30c3a5dca6616509367f05fbc184ad95b731f05bece96292",
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth"
+  },
+  "realesrgan-x2plus": {
+    "filename": "RealESRGAN_x2plus.pth",
+    "sha256": "49fafd45f8fd7aa8d31ab2a22d14d91b536c34494a5cfe31eb5d89c2fa266abb",
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth"
+  },
+  "realesrgan-x4plus": {
+    "filename": "RealESRGAN_x4plus.pth",
+    "sha256": "4fa0d38905f75ac06eb49a7951b426670021be3018265fd191d2125df9d682f1",
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth"
+  },
+  "realesrgan-x4plus-anime": {
+    "filename": "RealESRGAN_x4plus_anime_6B.pth",
+    "sha256": "f872d837d3c90ed2e05227bed711af5671a6fd1c9f7d7e91c911a61f155e99da",
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth"
+  },
+  "u2netp": {
+    "filename": "u2netp.onnx",
+    "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8",
+    "url": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx"
+  }
+}

@@ -1,0 +1,232 @@
+# Model registry.
+#
+# This file is the single source of truth for which models exist. The engine
+# never names a model in code — it asks the registry for "a model that does X".
+# Adding a checkpoint of an existing architecture requires no code at all.
+#
+# state_dict_key is intentionally omitted: the loader probes params_ema -> params
+# -> state_dict, which covers every published SR checkpoint format.
+#
+# priority breaks ties when several models match the same content type.
+
+models:
+  # ---------------------------------------------------------------- photo / general
+  - id: realesrgan-x4plus
+    name: Real-ESRGAN x4plus
+    task: super_resolution
+    architecture: rrdbnet
+    scale: 4
+    params: { num_in_ch: 3, num_out_ch: 3, scale: 4, num_feat: 64, num_block: 23, num_grow_ch: 32 }
+    weights:
+      url: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth
+      filename: RealESRGAN_x4plus.pth
+    backends: [cpu, cuda, onnx, directml, openvino, tensorrt]
+    precisions: [fp32, fp16]
+    content_types: [photo, artwork, old_photo, game, satellite, medical, unknown]
+    priority: 100
+    tile_size: 256
+    tile_overlap: 16
+    vram_mb_per_megapixel: 2400
+    description: >
+      The default. 16.7M params, strongest detail reconstruction of the set, and the
+      slowest. Trained with a degradation model covering blur, noise, and JPEG, so it
+      handles real-world (not just bicubic-downsampled) inputs.
+    license: BSD-3-Clause
+
+  - id: realesrgan-x2plus
+    name: Real-ESRGAN x2plus
+    task: super_resolution
+    architecture: rrdbnet
+    scale: 2
+    params: { num_in_ch: 3, num_out_ch: 3, scale: 2, num_feat: 64, num_block: 23, num_grow_ch: 32 }
+    weights:
+      url: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth
+      filename: RealESRGAN_x2plus.pth
+    backends: [cpu, cuda, onnx, directml, openvino, tensorrt]
+    precisions: [fp32, fp16]
+    content_types: [photo, artwork, old_photo, game, satellite, medical, unknown]
+    priority: 100
+    tile_size: 256
+    tile_overlap: 16
+    vram_mb_per_megapixel: 2400
+    description: Native 2x. Sharper than downscaling a 4x result when 2x is what you want.
+    license: BSD-3-Clause
+
+  - id: realesr-general-x4v3
+    name: Real-ESRGAN General x4 v3
+    task: super_resolution
+    architecture: srvgg
+    scale: 4
+    params: { num_in_ch: 3, num_out_ch: 3, num_feat: 64, num_conv: 32, upscale: 4, act_type: prelu }
+    weights:
+      url: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-general-x4v3.pth
+      filename: realesr-general-x4v3.pth
+    backends: [cpu, cuda, onnx, directml, openvino, tensorrt]
+    precisions: [fp32, fp16]
+    content_types: [photo, screenshot, document, text, logo, unknown]
+    priority: 80
+    tile_size: 384
+    tile_overlap: 16
+    vram_mb_per_megapixel: 700
+    description: >
+      1.2M params, roughly 8x faster than x4plus and far lighter on VRAM. Slightly
+      softer output. This is the right default on a 4GB card, and for batch work.
+    license: BSD-3-Clause
+
+  # ---------------------------------------------------------------- anime / illustration
+  - id: realesrgan-x4plus-anime
+    name: Real-ESRGAN x4plus Anime 6B
+    task: anime_restoration
+    architecture: rrdbnet
+    scale: 4
+    params: { num_in_ch: 3, num_out_ch: 3, scale: 4, num_feat: 64, num_block: 6, num_grow_ch: 32 }
+    weights:
+      url: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth
+      filename: RealESRGAN_x4plus_anime_6B.pth
+    backends: [cpu, cuda, onnx, directml, openvino, tensorrt]
+    precisions: [fp32, fp16]
+    content_types: [anime, manga, artwork]
+    priority: 100
+    tile_size: 384
+    tile_overlap: 16
+    vram_mb_per_megapixel: 900
+    description: >
+      6 RRDB blocks instead of 23. Trained on illustration, so it keeps line art crisp
+      instead of hallucinating photo texture into flat colour regions.
+    license: BSD-3-Clause
+
+  - id: realesr-animevideov3
+    name: Real-ESRGAN Anime Video v3
+    task: anime_restoration
+    architecture: srvgg
+    scale: 4
+    params: { num_in_ch: 3, num_out_ch: 3, num_feat: 64, num_conv: 16, upscale: 4, act_type: prelu }
+    weights:
+      url: https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth
+      filename: realesr-animevideov3.pth
+    backends: [cpu, cuda, onnx, directml, openvino, tensorrt]
+    precisions: [fp32, fp16]
+    content_types: [anime, manga]
+    priority: 70
+    tile_size: 512
+    tile_overlap: 16
+    vram_mb_per_megapixel: 500
+    description: Fastest anime model. Built for frame sequences; the one to use for batches.
+    license: BSD-3-Clause
+
+  # ---------------------------------------------------------------- face
+  - id: gfpgan-v1.4
+    name: GFPGAN v1.4
+    task: face_restoration
+    architecture: gfpgan
+    scale: 1
+    params:
+      out_size: 512
+      num_style_feat: 512
+      channel_multiplier: 2
+      num_mlp: 8
+      input_is_latent: true
+      different_w: true
+      narrow: 1.0
+      sft_half: true
+    weights:
+      url: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth
+      filename: GFPGANv1.4.pth
+    # The StyleGAN2 decoder wants [-1,1], unlike every SR model here: (x - 0.5) / 0.5.
+    # The backend reads this and converts, so callers still see [0,1]. Omitting it does
+    # not fail loudly — it returns a washed-out face with the shadows clipped away.
+    input_mean: [0.5, 0.5, 0.5]
+    input_std: [0.5, 0.5, 0.5]
+    output_norm: affine
+    backends: [cpu, cuda, onnx, directml, openvino, tensorrt]
+    # fp32 ONLY, and this is not conservatism — fp16 is measurably broken here.
+    # The StyleGAN2 decoder's weight demodulation (rsqrt of a sum of squares over
+    # 4608 terms) plus a sqrt(2) gain compounded across 13 layers leaves half
+    # precision without the dynamic range to represent the activations. Measured on
+    # this exact checkpoint: fp32 output spans -1.00..+0.92 (std 0.343), fp16
+    # collapses to -0.50..-0.19 (std 0.123) — a near-constant dark smear, no NaN, no
+    # error, just a silently ruined face. The SR models above are unaffected and
+    # keep fp16.
+    precisions: [fp32]
+    # fp16 is off here too, and for the same reason as `precisions` above — but it took a
+    # second, nastier discovery to find out. The fp16 ONNX graph passes verification on
+    # ONNX Runtime's *CPU* provider, which quietly computes much of it in fp32. Run the
+    # identical graph on DirectML, which is what the desktop app does, and the StyleGAN2
+    # decoder collapses exactly as it does in torch fp16: output std 0.343 -> 0.123,
+    # 179/255 from the truth, no error raised. The graph doubles in size at fp32 (162MB ->
+    # 325MB) and that is simply what this model costs.
+    onnx_fp16: false
+    content_types: [portrait, photo, old_photo]
+    priority: 100
+    # The encoder flattens into a Linear, so the input size is baked into the weights.
+    # An ONNX export with dynamic H/W builds fine and then fails on first inference.
+    dynamic_shape: false
+    # Not tiled: the network takes one fixed 512x512 aligned crop per face.
+    tile_size: 512
+    tile_overlap: 0
+    vram_mb_per_megapixel: 1500
+    description: >
+      Blind face restoration on a StyleGAN2-FFHQ prior. Operates on aligned 512px crops
+      that are warped back into the upscaled image, so it composes with any SR model.
+    license: Apache-2.0
+
+  # ---------------------------------------------------------------- background removal
+  #
+  # Note what is NOT here: no architecture module, no torch code, no exporter. These
+  # are published ONNX graphs, and `architecture: onnx-graph` tells the backend the
+  # checkpoint *is* the model. Adding them was a YAML edit — which is the pluggable
+  # registry doing the job it was built for, on a task it was not designed around.
+  #
+  # The consequence is that they cannot run on the torch backend, and their spec says
+  # so. ONNX Runtime, DirectML and OpenVINO all serve them.
+
+  - id: isnet-general
+    name: IS-Net (DIS) general use
+    task: background_removal
+    architecture: onnx-graph
+    scale: 1
+    weights:
+      url: https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx
+      filename: isnet-general-use.onnx
+    # ImageNet channel means, unit variance — the preprocessing the DIS authors trained
+    # with. The head emits unbounded logits, so the mask comes from their own extremes;
+    # clipping them to [0,1] instead would flatten it to a grey smear.
+    input_mean: [0.485, 0.456, 0.406]
+    input_std: [1.0, 1.0, 1.0]
+    output_norm: minmax
+    backends: [onnx, directml, openvino]
+    precisions: [fp32]
+    content_types: [photo, portrait, artwork]
+    priority: 100
+    # Fixed 1024x1024 input: this is a whole-image segmenter, not a tiled one. The
+    # matting pipeline resizes into it and resizes the mask back out.
+    tile_size: 1024
+    tile_overlap: 0
+    vram_mb_per_megapixel: 1200
+    description: >
+      Dichotomous image segmentation. Markedly better than U^2-Net on hair, fur and
+      thin structures — the places a cutout is actually judged. 176MB.
+    license: Apache-2.0
+
+  - id: u2netp
+    name: U^2-Net (lightweight)
+    task: background_removal
+    architecture: onnx-graph
+    scale: 1
+    weights:
+      url: https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx
+      filename: u2netp.onnx
+    input_mean: [0.485, 0.456, 0.406]
+    input_std: [0.229, 0.224, 0.225]
+    output_norm: minmax
+    backends: [onnx, directml, openvino]
+    precisions: [fp32]
+    content_types: [photo, portrait, artwork]
+    priority: 50
+    tile_size: 320
+    tile_overlap: 0
+    vram_mb_per_megapixel: 200
+    description: >
+      4.7MB and runs on a CPU in well under a second. Softer edges than IS-Net; the one
+      to pick for batch work or a machine with no GPU.
+    license: Apache-2.0

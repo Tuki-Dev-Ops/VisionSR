@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------- tokens --
+   Dark is the default theme. `.light` on <html> swaps the palette; every
+   component reads these tokens, so no component needs a dark: variant.       */
+
+:root,
+.dark {
+  --bg: #0a0b0d;
+  --panel: #101114;
+  --panel-raised: #16181c;
+  --panel-inset: #0d0e11;
+  --border: #23252b;
+  --border-strong: #32353d;
+  --fg: #e7e8ea;
+  --fg-muted: #9a9da5;
+  --fg-subtle: #6a6d75;
+  --accent: #6e8bff;
+  --accent-fg: #0a0b0d;
+  --accent-soft: rgba(110, 139, 255, 0.14);
+  --success: #3ecf8e;
+  --warn: #e8b339;
+  --danger: #f2666b;
+  --danger-soft: rgba(242, 102, 107, 0.12);
+  --canvas: #000000;
+  --grid: rgba(255, 255, 255, 0.028);
+}
+
+.light {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --panel-raised: #ffffff;
+  --panel-inset: #f1f2f5;
+  --border: #e2e4e9;
+  --border-strong: #cbcfd6;
+  --fg: #14161a;
+  --fg-muted: #5c616b;
+  --fg-subtle: #8b909a;
+  --accent: #3b5bdb;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(59, 91, 219, 0.1);
+  --success: #16a06a;
+  --warn: #b7791f;
+  --danger: #d2333a;
+  --danger-soft: rgba(210, 51, 58, 0.08);
+  --canvas: #e9eaee;
+  --grid: rgba(0, 0, 0, 0.035);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --color-panel-inset: var(--panel-inset);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-canvas: var(--canvas);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  /* Thin, calm scrollbars — this is a tool, not a document. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /* The canvas mat. A near-invisible texture that says "no image here" without
+     competing with the pixels under comparison — it is not an alpha indicator. */
+  .bg-checker {
+    background-color: var(--canvas);
+    background-image:
+      linear-gradient(45deg, var(--grid) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--grid) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--grid) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--grid) 75%);
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+  }
+
+  /* The *alpha* checkerboard: the one that has to actually read as transparency.
+     Deliberately not theme-aware. Every cutout tool uses the same light grey on white
+     and users recognise it instantly; a dark checkerboard on the dark theme would
+     swallow the dark half of a subject's matte, which is precisely the edge you are
+     squinting at when you turn this feature on. Fixed 16px squares, and the element
+     that wears this class is never scaled — see CompareCanvas.backdropStyle. */
+  .bg-alpha-checker {
+    --checker-a: #ffffff;
+    --checker-b: #ced3db;
+    background-color: var(--checker-a);
+    background-image:
+      linear-gradient(45deg, var(--checker-b) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--checker-b) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--checker-b) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--checker-b) 75%);
+    background-size: 16px 16px;
+    background-position:
+      0 0,
+      0 8px,
+      8px -8px,
+      -8px 0;
+  }
+
+  /* Same pattern at swatch scale, so the picker's button looks like a checkerboard
+     rather than like two grey triangles. Self-contained rather than a modifier on
+     .bg-alpha-checker: both would be `bg-*` classes in one cn() call, and
+     tailwind-merge resolves same-group conflicts by dropping the earlier one. */
+  .bg-alpha-checker-swatch {
+    --checker-a: #ffffff;
+    --checker-b: #ced3db;
+    background-color: var(--checker-a);
+    background-image:
+      linear-gradient(45deg, var(--checker-b) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--checker-b) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--checker-b) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--checker-b) 75%);
+    background-size: 8px 8px;
+    background-position:
+      0 0,
+      0 4px,
+      4px -4px,
+      -4px 0;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes vsr-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-indeterminate {
+  animation: vsr-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes vsr-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-in {
+  animation: vsr-fade-in 0.16s ease-out;
+}

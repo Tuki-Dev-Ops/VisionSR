@@ -1,0 +1,27 @@
+{
+  "name": "visionsr-desktop",
+  "version": "0.1.0",
+  "description": "VisionSR desktop shell",
+  "main": "dist/main.js",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:frontend": "npm --prefix ../frontend run build",
+    "start": "npm run build:frontend && npm run build && electron .",
+    "e2e": "node e2e-desktop.mjs",
+    "e2e:hotfolder": "node e2e-hotfolder.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dist": "bash ../scripts/build_installer.sh",
+    "e2e:packaged": "node e2e-packaged.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "playwright": "^1.61.1",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3"
+  }
+}

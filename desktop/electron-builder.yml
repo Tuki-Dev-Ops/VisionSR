@@ -1,0 +1,79 @@
+# Packaging.
+#
+#   1. python -m PyInstaller packaging/visionsr-server.spec --noconfirm --distpath dist
+#   2. npm --prefix frontend run build
+#   3. npm run dist          (from desktop/)
+#
+# -> desktop/release/VisionSR-0.1.0-x64.exe
+#
+# The user double-clicks one .exe and gets a working app. They do not have Python and
+# never need it: the interpreter, torch, CUDA and every architecture the registry loads
+# dynamically are frozen into `visionsr-server.exe`, which Electron launches as a child
+# process and kills on exit.
+#
+# `extraResources` mirrors exactly the layout main.ts and sidecar.ts look for under
+# `app.isPackaged`. Change one and you must change the other.
+
+appId: ai.spaceplanning.visionsr
+productName: VisionSR
+copyright: Copyright © 2026
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - dist/**/*
+  - package.json
+  - "!**/*.map"
+
+extraResources:
+  # The exported frontend. main.ts serves this over loopback rather than file://,
+  # because a Next export uses absolute asset paths and file:// is an opaque origin.
+  - from: ../frontend/out
+    to: frontend
+
+  # The frozen backend — PyInstaller's onedir output. sidecar.ts looks for
+  # `backend/visionsr-server.exe` here when packaged, and falls back to the repo
+  # virtualenv when not.
+  #
+  # onedir, not onefile: a onefile build of a 2.5GB app unpacks itself to a temp
+  # directory on *every launch*, which is a 30-second startup and 2.5GB of disk churn
+  # each time. The NSIS installer is what makes this one file to the user; the app
+  # underneath stays unpacked, and starts in a second.
+  - from: ../dist/visionsr-server
+    to: backend
+    filter:
+      - "**/*"
+
+  # The models. ONNX graphs only — the shipped runtime has no PyTorch, so the .pth
+  # checkpoints (485MB) are development artefacts and stay behind. sidecar.ts points
+  # VISIONSR_CHECKPOINT_DIR here.
+  #
+  # These are produced and *verified* by scripts/export_onnx.py, which fails the build
+  # if any graph deviates from its torch model by more than 2/255. Do not hand-copy
+  # them.
+  - from: ../ai/checkpoints
+    to: checkpoints
+    filter:
+      - "**/*.onnx"
+      - "!**/*.pth"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+
+mac:
+  target: [dmg]
+  category: public.app-category.photography
+
+linux:
+  target: [AppImage]
+  category: Graphics
