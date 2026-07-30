@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import AsyncIterator
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile, status
@@ -172,7 +173,7 @@ async def job_events(job_id: str) -> StreamingResponse:
     if job is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such job.")
 
-    async def event_stream():
+    async def event_stream() -> AsyncIterator[str]:
         async for event in manager.stream(job):
             yield f"data: {json.dumps(event.model_dump())}\n\n"
 

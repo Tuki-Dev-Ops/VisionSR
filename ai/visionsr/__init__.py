@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
+
 from .core.errors import (
     BackendUnavailableError,
     ImageTooLargeError,
@@ -66,7 +68,7 @@ def enhance_file(path: str | Path, options: EnhanceOptions | None = None) -> Enh
     return get_engine().enhance_file(Path(path), options)
 
 
-def enhance(image, options: EnhanceOptions | None = None) -> EnhanceResult:
+def enhance(image: np.ndarray, options: EnhanceOptions | None = None) -> EnhanceResult:
     """Enhance an in-memory HWC uint8 RGB(A) numpy array."""
     from .inference.engine import get_engine
 

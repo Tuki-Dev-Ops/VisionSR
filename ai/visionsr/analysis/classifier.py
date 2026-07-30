@@ -178,7 +178,9 @@ def _palette_concentration(rgb: np.ndarray) -> float:
     handful of bins; a photograph spreads them across thousands.
     """
     small = cv2.resize(rgb, (128, 128), interpolation=cv2.INTER_AREA)
-    quantised = (small >> 3).astype(np.uint32)
+    # Widen before shifting, not after: identical for uint8 input, and it keeps the
+    # operand types legible to a type checker.
+    quantised = small.astype(np.uint32) >> 3
     keys = (quantised[:, :, 0] << 10) | (quantised[:, :, 1] << 5) | quantised[:, :, 2]
 
     counts = np.bincount(keys.ravel())
@@ -194,7 +196,7 @@ def _bimodality(gray: np.ndarray) -> float:
     Scanned text is ink-on-paper: near-black and near-white, very little between.
     """
     hist = cv2.calcHist([gray], [0], None, [32], [0, 256]).ravel()
-    hist /= hist.sum() + 1e-9
+    hist = hist / (hist.sum() + 1e-9)
     return float(hist[:3].sum() + hist[-3:].sum())
 
 

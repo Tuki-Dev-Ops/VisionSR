@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated
 
@@ -20,6 +22,7 @@ from rich.progress import (
     BarColumn,
     Progress,
     SpinnerColumn,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
@@ -27,7 +30,7 @@ from rich.progress import (
 from rich.table import Table
 
 from .core.errors import VisionSRError
-from .core.types import Backend, EnhanceOptions, Precision
+from .core.types import Backend, EnhanceOptions, EnhanceResult, Precision
 from .ui import FAIL, OK, bar, console
 
 app = typer.Typer(
@@ -114,9 +117,9 @@ def enhance(
                 def on_progress(
                     stage: str,
                     fraction: float,
-                    progress=progress,
-                    task=task,
-                    label=label,
+                    progress: Progress = progress,
+                    task: TaskID = task,
+                    label: str = label,
                 ) -> None:
                     progress.update(
                         task, description=f"{label} — {stage}", completed=fraction * 100
@@ -278,7 +281,8 @@ def _destination(path: Path, output: Path | None, source: Path, batch: bool, sca
     return (output / relative).with_suffix(".png")
 
 
-def _progress_bar(label: str):
+@contextmanager
+def _progress_bar(label: str) -> Iterator[tuple[Progress, TaskID]]:
     progress = Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -289,19 +293,14 @@ def _progress_bar(label: str):
         transient=True,
     )
 
-    class _Ctx:
-        def __enter__(self):
-            progress.start()
-            return progress, progress.add_task(label, total=100)
-
-        def __exit__(self, *exc):
-            progress.stop()
-            return False
-
-    return _Ctx()
+    progress.start()
+    try:
+        yield progress, progress.add_task(label, total=100)
+    finally:
+        progress.stop()
 
 
-def _print_result(result, destination: Path) -> None:
+def _print_result(result: EnhanceResult, destination: Path) -> None:
     width, height = result.output_size
     models_used = " + ".join(run.model_id for run in result.runs) or "resample only"
     backend = result.runs[0].backend.value if result.runs else "—"
