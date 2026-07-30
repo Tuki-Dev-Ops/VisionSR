@@ -6,7 +6,10 @@ build-backend = "hatchling.build"
 name = "visionsr"
 version = "0.1.0"
 description = "Enterprise AI super resolution, restoration and enhancement engine"
-readme = "README.md"
+# The English file, not README.md. This becomes the package's long description on
+# PyPI, whose audience is not the same as the repository's — the repository leads in
+# Korean by choice, the package index should stay readable to everyone installing it.
+readme = "README.en.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 
