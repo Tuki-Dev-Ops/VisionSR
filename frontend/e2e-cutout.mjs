@@ -10,7 +10,7 @@
  *
  *   APP_URL=http://127.0.0.1:3001 node e2e-cutout.mjs
  */
-import { chromium } from "playwright";
+import { launchBrowser } from "./e2e-browser.mjs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -29,7 +29,7 @@ const check = (name, ok, detail = "") => {
   if (!ok) failures.push(name);
 };
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 
 const consoleErrors = [];
