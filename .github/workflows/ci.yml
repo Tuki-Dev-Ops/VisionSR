@@ -70,12 +70,21 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      # CPU torch, from the CPU index. The unmarked tier needs no checkpoints and no
+      # GPU, but it does need torch importable: the architecture registry is populated
+      # by importing visionsr.models, and those modules define nn.Modules. Without it
+      # the registry comes up empty and test_registered_architectures_all_resolve
+      # fails with "Known: []" — which looks like a broken registry rather than a
+      # missing dependency. The CPU wheel is a fraction of the CUDA one.
       - name: Install
-        run: python -m pip install -e ".[api,onnx,dev]"
+        run: |
+          python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e ".[api,onnx,dev]"
 
       # `-m "not weights"` is the contract: every test needing a checkpoint carries
       # that marker, and conftest skips the ones needing ground-truth photos. If this
-      # job ever starts downloading half a gigabyte, that contract has been broken.
+      # job ever starts downloading half a gigabyte of *checkpoints*, that contract
+      # has been broken.
       - name: Tests
         run: pytest -m "not weights" -q --junitxml=junit.xml
 
