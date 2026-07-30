@@ -15,7 +15,7 @@
     "e2e:packaged": "node e2e-packaged.mjs"
   },
   "devDependencies": {
-    "@types/node": "^22.10.2",
+    "@types/node": "^26.1.2",
     "electron": "^33.2.1",
     "electron-builder": "^25.1.8",
     "playwright": "^1.61.1",
