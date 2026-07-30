@@ -1,13 +1,26 @@
-# VisionSR
+<h1 align="center">VisionSR</h1>
 
-[English](README.md) · [한국어](README.ko.md) · [中文](README.zh.md) · **日本語**
+<p align="center">
+  <a href="README.md">English</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.zh.md">中文</a> ·
+  <b>日本語</b>
+</p>
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![Security](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![License](https://img.shields.io/badge/license-Apache--2.0-green)
+<p align="center">
+  AI 超解像エンジン · 画像の拡大・復元・顔の再構成・ディテール復元<br>
+  <b>モデル自動振り分け</b> · <b>9 モデル</b> · <b>4GB VRAM からのタイル推論</b> · <b>完全ローカル実行</b><br>
+  <b>CLI</b> · <b>HTTP API</b> · <b>Web UI</b> · <b>Electron デスクトップアプリ</b>
+</p>
 
-画像の拡大・復元・顔の再構成・ディテール復元を行う AI 超解像エンジン。
+<p align="center">
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml/badge.svg" alt="Security"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/code%20style-ruff-000000" alt="Ruff">
+  <img src="https://img.shields.io/badge/types-mypy-2a6db2" alt="mypy">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License: Apache-2.0">
+</p>
 
 画像を渡すと、それが何なのか（写真・人物・線画・スキャン）、どの程度傷んでいるか
 （ノイズ・ブラー・JPEG）を自ら判断し、適した モデルを選び、実際に使える VRAM に合わせて

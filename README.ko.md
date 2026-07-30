@@ -1,13 +1,26 @@
-# VisionSR
+<h1 align="center">VisionSR</h1>
 
-[English](README.md) · **한국어** · [中文](README.zh.md) · [日本語](README.ja.md)
+<p align="center">
+  <a href="README.md">English</a> ·
+  <b>한국어</b> ·
+  <a href="README.zh.md">中文</a> ·
+  <a href="README.ja.md">日本語</a>
+</p>
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![Security](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![License](https://img.shields.io/badge/license-Apache--2.0-green)
+<p align="center">
+  AI 초해상도 엔진 · 이미지 업스케일링, 복원, 얼굴 복구, 디테일 재구성<br>
+  <b>모델 자동 라우팅</b> · <b>모델 9종</b> · <b>4GB VRAM부터 타일 추론</b> · <b>완전 로컬 실행</b><br>
+  <b>CLI</b> · <b>HTTP API</b> · <b>웹 UI</b> · <b>Electron 데스크톱 앱</b>
+</p>
 
-이미지 업스케일링, 복원, 얼굴 복구, 디테일 재구성을 수행하는 AI 초해상도 엔진.
+<p align="center">
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml/badge.svg" alt="Security"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/code%20style-ruff-000000" alt="Ruff">
+  <img src="https://img.shields.io/badge/types-mypy-2a6db2" alt="mypy">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License: Apache-2.0">
+</p>
 
 이미지를 넣으면 그것이 무엇인지(사진, 인물, 선화, 스캔), 얼마나 손상됐는지(노이즈,
 블러, JPEG)를 스스로 판단해 알맞은 모델을 고르고, 실제 가용 VRAM에 맞춰 타일 크기를
@@ -138,7 +151,7 @@ tests/                  두 계층: 무표식(가중치·GPU 불필요)과 @pyte
 | 구성 요소 | 방법 | 왜 신경망이 아닌가 |
 |---|---|---|
 | 콘텐츠 분류 | 색상 수·채도·엣지·주파수 통계에 대한 휴리스틱 앙상블 | 설명 가능 — `ImageAnalysis.scores`가 어떤 신호가 결정했는지 알려줌. 가중치도 GPU도 불필요하고 약 10ms. |
-| 노이즈 추정 | Immerkær의 Laplacian-of-Laplacian 커널 | 무참조 해석해라 학습 데이터가 필요 없음. |
+| 노이즈 추정 | Immerkær의 Laplacian-of-Laplacian 커널 | 무참조이고 해석적으로 닫힌 형태라 학습 데이터가 필요 없음. |
 | 블러 추정 | Laplacian 분산 + 그래디언트 통계 | 위와 동일. |
 | JPEG 아티팩트 추정 | 8x8 격자 경계의 불연속 측정 | 추론이 아니라 아티팩트를 직접 측정. |
 | 모델 선택 | 위 지표에 대한 임계값 규칙 + 우선순위 | 잘못된 라우팅이 가장 눈에 띄는 실패이므로 설명 가능해야 함. |

@@ -1,14 +1,26 @@
-# VisionSR
+<h1 align="center">VisionSR</h1>
 
-**English** · [한국어](README.ko.md) · [中文](README.zh.md) · [日本語](README.ja.md)
+<p align="center">
+  <b>English</b> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.zh.md">中文</a> ·
+  <a href="README.ja.md">日本語</a>
+</p>
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![Security](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![License](https://img.shields.io/badge/license-Apache--2.0-green)
+<p align="center">
+  Enterprise AI super resolution · upscaling, restoration, face recovery and detail reconstruction<br>
+  <b>Automatic model routing</b> · <b>9 models</b> · <b>tiled inference from 4 GB VRAM</b> · <b>fully local</b><br>
+  <b>CLI</b> · <b>HTTP API</b> · <b>Web UI</b> · <b>Electron desktop app</b>
+</p>
 
-Enterprise AI super resolution: image upscaling, restoration, face recovery and
-intelligent detail reconstruction.
+<p align="center">
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml/badge.svg" alt="Security"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/code%20style-ruff-000000" alt="Ruff">
+  <img src="https://img.shields.io/badge/types-mypy-2a6db2" alt="mypy">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License: Apache-2.0">
+</p>
 
 Give it an image; it works out what the image *is* (photograph, portrait, line art,
 scan), how badly it is damaged (noise, blur, JPEG), picks the model that suits, sizes
