@@ -1,0 +1,141 @@
+# CI is scoped to what a hosted runner can honestly check.
+#
+# There is no GPU here, and the checkpoints are ~485 MB that change rarely. So this
+# workflow runs the tier that needs neither: lint, types, the unmarked tests, and a
+# real production build of both JS apps. The weights tier and the end-to-end scripts
+# are a local/self-hosted concern — see the "Tests" section of the README. A green
+# tick here means "this cannot be wrong for structural reasons", not "the pixels are
+# right"; scripts/verify_quality.py is what claims the latter.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to a PR makes the in-flight run pointless — cancel it rather than pay
+# for it. `main` is excluded: those runs are the record of what was merged.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  python-quality:
+    name: lint + types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      # No torch: ruff and mypy read the source, and `ignore_missing_imports` covers
+      # what is absent. Installing 2.5 GB of CUDA wheels to run a linter is not a
+      # trade worth making.
+      - name: Install
+        run: |
+          python -m pip install -e ".[api,onnx,dev]"
+
+      - name: Ruff
+        run: ruff check --output-format=github .
+
+      - name: Mypy
+        run: mypy ai/visionsr backend
+
+  python-tests:
+    name: pytest (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install
+        run: python -m pip install -e ".[api,onnx,dev]"
+
+      # `-m "not weights"` is the contract: every test needing a checkpoint carries
+      # that marker, and conftest skips the ones needing ground-truth photos. If this
+      # job ever starts downloading half a gigabyte, that contract has been broken.
+      - name: Tests
+        run: pytest -m "not weights" -q --junitxml=junit.xml
+
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-${{ matrix.os }}-py${{ matrix.python }}
+          path: junit.xml
+          if-no-files-found: ignore
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      # The build is the check that matters: `tsc` does not run the Next compiler, and
+      # a static export can fail on things a typecheck cannot see.
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  desktop:
+    name: desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      # Electron's postinstall downloads a ~100 MB browser this job never launches.
+      - name: Install
+        working-directory: desktop
+        run: npm ci
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+
+      - name: Typecheck
+        working-directory: desktop
+        run: npm run typecheck
