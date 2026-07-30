@@ -1,8 +1,8 @@
 <h1 align="center">VisionSR</h1>
 
 <p align="center">
-  <a href="README.md">English</a> ·
-  <a href="README.ko.md">한국어</a> ·
+  <a href="README.md">한국어</a> ·
+  <a href="README.en.md">English</a> ·
   <a href="README.zh.md">中文</a> ·
   <b>日本語</b>
 </p>
@@ -31,7 +31,7 @@ visionsr enhance photo.jpg --scale 4        # コマンドはこれだけ
 ```
 
 > 以下はプロジェクトの概要です。ベンチマーク、設計上の判断、API リファレンス、
-> パッケージングを含む全文は [英語版 README](README.md) を参照してください。
+> パッケージングを含む全文は [英語版 README](README.en.md) を参照してください。
 
 ---
 
@@ -92,7 +92,7 @@ visionsr models                           # 登録済みモデルと実行可否
 visionsr doctor                           # 利用可能なハードウェア
 ```
 
-テストと E2E の実行方法は英語版 README の [Tests](README.md#tests) を参照してください。
+テストと E2E の実行方法は英語版 README の [Tests](README.en.md#tests) を参照してください。
 
 ## ディレクトリ
 

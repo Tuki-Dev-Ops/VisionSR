@@ -1,8 +1,8 @@
 <h1 align="center">VisionSR</h1>
 
 <p align="center">
-  <a href="README.md">English</a> ·
-  <a href="README.ko.md">한국어</a> ·
+  <a href="README.md">한국어</a> ·
+  <a href="README.en.md">English</a> ·
   <b>中文</b> ·
   <a href="README.ja.md">日本語</a>
 </p>
@@ -31,7 +31,7 @@ visionsr enhance photo.jpg --scale 4        # 一条命令就够了
 ```
 
 > 以下为项目概览。基准测试、架构取舍、API 参考与打包等完整文档请见
-> [英文 README](README.md)。
+> [英文 README](README.en.md)。
 
 ---
 
@@ -87,7 +87,7 @@ visionsr models                           # 已注册模型及其可用性
 visionsr doctor                           # 可用硬件
 ```
 
-测试与端到端脚本的运行方式见英文 README 的 [Tests](README.md#tests) 一节。
+测试与端到端脚本的运行方式见英文 README 的 [Tests](README.en.md#tests) 一节。
 
 ## 目录结构
 
