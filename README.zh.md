@@ -1,13 +1,26 @@
-# VisionSR
+<h1 align="center">VisionSR</h1>
 
-[English](README.md) · [한국어](README.ko.md) · **中文** · [日本語](README.ja.md)
+<p align="center">
+  <a href="README.md">English</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <b>中文</b> ·
+  <a href="README.ja.md">日本語</a>
+</p>
 
-[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
-[![Security](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue)
-![License](https://img.shields.io/badge/license-Apache--2.0-green)
+<p align="center">
+  企业级 AI 超分辨率引擎 · 图像放大、修复、人脸还原与细节重建<br>
+  <b>模型自动路由</b> · <b>9 个模型</b> · <b>4GB 显存起的分块推理</b> · <b>完全本地运行</b><br>
+  <b>命令行</b> · <b>HTTP API</b> · <b>Web 界面</b> · <b>Electron 桌面应用</b>
+</p>
 
-企业级 AI 超分辨率引擎：图像放大、修复、人脸还原与细节重建。
+<p align="center">
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml"><img src="https://github.com/Tuki-Dev-Ops/VisionSR/actions/workflows/security.yml/badge.svg" alt="Security"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/code%20style-ruff-000000" alt="Ruff">
+  <img src="https://img.shields.io/badge/types-mypy-2a6db2" alt="mypy">
+  <img src="https://img.shields.io/badge/license-Apache--2.0-green" alt="License: Apache-2.0">
+</p>
 
 给它一张图，它会自行判断这是什么（照片、人像、线稿、扫描件）、损坏到什么程度（噪点、
 模糊、JPEG 压缩），据此选择合适的模型，并按实际可用显存决定分块大小后执行。你可以手动
