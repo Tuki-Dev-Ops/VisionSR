@@ -1,5 +1,12 @@
 # VisionSR
 
+**English** · [한국어](README.ko.md) · [中文](README.zh.md) · [日本語](README.ja.md)
+
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![Security](../../actions/workflows/security.yml/badge.svg)](../../actions/workflows/security.yml)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![License](https://img.shields.io/badge/license-Apache--2.0-green)
+
 Enterprise AI super resolution: image upscaling, restoration, face recovery and
 intelligent detail reconstruction.
 
@@ -10,6 +17,125 @@ its tiles to the VRAM it actually has, and runs. No dials to turn unless you wan
 ```bash
 visionsr enhance photo.jpg --scale 4        # that is the whole command
 ```
+
+---
+
+## Background
+
+Every upscaler faces the same fork: a photograph, a scanned document and a cel-shaded
+drawing each need a *different* model, and running the wrong one is not a small error.
+A photo model over line art stipples texture into flat regions; an anime model over a
+portrait turns skin to plastic. Most tools push that decision onto the user as a
+dropdown, which only works if the user already knows the answer.
+
+VisionSR makes the decision itself. It measures the image — colour statistics, edge
+structure, blind noise/blur/JPEG estimates, face detection — and routes to the model
+those measurements imply, then sizes its tiles to the VRAM actually present. The
+dropdown still exists, but it is an override rather than a prerequisite.
+
+Three constraints shaped the rest:
+
+- **It runs where the images are.** No upload, no per-image cost, no queue. A 4 GB
+  laptop GPU is the design target, which is why tiling and VRAM estimation are core
+  rather than optional.
+- **The claims are measured.** `scripts/verify_quality.py` degrades a known original,
+  reconstructs it, and scores against the truth with LPIPS. The figures in
+  [Status](#status) come from that script and you can re-run it.
+- **The output is honest.** A correctly-sized image is not evidence of anything, so
+  the tests assert things about pixels and metadata rather than about shapes.
+
+## Quick start
+
+```bash
+python -m venv .venv && . .venv/Scripts/activate     # Windows; use bin/activate on Unix
+pip install -e ".[api,onnx,metrics,dev]"
+
+# PyTorch, matched to your driver — check `nvidia-smi` first (>=525 -> cu126, 452-525 -> cu118)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+
+python scripts/download_weights.py --all             # ~485 MB of checkpoints
+visionsr doctor                                      # confirm it found your GPU
+```
+
+Then pick a surface:
+
+```bash
+visionsr enhance photo.jpg --scale 4                 # CLI
+uvicorn backend.app.main:app --port 8000             # HTTP API, docs at /docs
+cd frontend && npm install && npm run dev            # web UI on :3000
+cd desktop  && npm install && npm start              # desktop app (starts its own engine)
+```
+
+Full detail in [Install](#install) and [Use](#use). For the test and end-to-end
+suites, see [Tests](#tests).
+
+## Directory
+
+```
+ai/                     The engine. Knows nothing about HTTP or the UI.
+  visionsr/
+    analysis/           What is this image, and how damaged? Classifier, blind
+                        quality estimators, face detection, model selection.
+    backends/           One interface, many runtimes: torch, ONNX, OpenVINO.
+    core/               Types, config, errors, and the model/architecture registries.
+    inference/          The engine loop and the tiler (overlap, feathering, VRAM).
+    models/             Network definitions — RRDBNet, SRVGG, GFPGAN, StyleGAN2.
+    pipelines/          Multi-model flows: face restoration, alpha matting.
+    preprocessing/      Image decode/encode. The only place BGR/RGB and EXIF are handled.
+    postprocessing/     Sharpening and other output filters.
+    exporters/          Torch -> ONNX, so the packaged app can ship without PyTorch.
+  configs/models.yaml   The model registry. Single source of truth; no model is
+                        named in code.
+  checkpoints/          Downloaded weights (gitignored).
+
+backend/app/            FastAPI service: routes, job queue, SSE progress, schemas.
+frontend/               Next.js workspace (static export) + the e2e scripts.
+desktop/                Electron shell: spawns the engine as a sidecar, hot folder,
+                        native open/save.
+packaging/              PyInstaller spec for the no-PyTorch server binary.
+scripts/                Weights, assets, ONNX export, quality gate, fixtures, installer.
+tests/                  Two tiers: unmarked (no weights, no GPU) and @pytest.mark.weights.
+.github/workflows/      CI (lint, types, tests, builds) and Security (CVEs, CodeQL,
+                        secrets, filesystem).
+```
+
+## Models
+
+The registry is [`ai/configs/models.yaml`](ai/configs/models.yaml). Nothing in the
+engine names a model; it asks for "something that does X for content type Y", so
+adding a checkpoint of a known architecture takes no code.
+
+### Deep learning
+
+| Model | Task | Architecture | Scale | Notes | License |
+|---|---|---|---|---|---|
+| `realesrgan-x4plus` | Super resolution | RRDBNet (16.7M) | 4x | Strongest detail, slowest. The default on a capable GPU. | BSD-3-Clause |
+| `realesrgan-x2plus` | Super resolution | RRDBNet | 2x | Native 2x; sharper than downscaling a 4x result. | BSD-3-Clause |
+| `realesr-general-x4v3` | Super resolution | SRVGG (1.2M) | 4x | ~8x faster, far lighter on VRAM. Right default on a 4 GB card. | BSD-3-Clause |
+| `realesrgan-x4plus-anime` | Anime / illustration | RRDBNet 6B | 4x | Preserves flat cel shading instead of stippling it. | BSD-3-Clause |
+| `realesr-animevideov3` | Anime / illustration | SRVGG | 4x | Lightweight anime path. | BSD-3-Clause |
+| `gfpgan-v1.4` | Face restoration | GFPGAN + StyleGAN2 | 1x | Runs on aligned 512px crops and blends back. Recovers hair, lashes, iris. | Apache-2.0 |
+| `isnet-general` | Background removal | IS-Net (ONNX) | 1x | Alpha matting; holds thin structure like wheel spokes. | Apache-2.0 |
+| `u2netp` | Background removal | U²-Net lite (ONNX) | 1x | 4 MB fallback. | Apache-2.0 |
+| YuNet | Face detection | OpenCV DNN (ONNX) | — | 340 KB. Gates face restoration and portrait classification. | Apache-2.0 |
+
+Super resolution is GAN-based, so it is expected to *lose* PSNR while being
+perceptually much closer — see the LPIPS note in [Status](#status).
+
+### Classical ML and signal processing
+
+Not everything here is a network, and the parts that are not are deliberate:
+
+| Component | Method | Why not a network |
+|---|---|---|
+| Content classification | Heuristic ensemble over colour-count, saturation, edge and frequency statistics | Inspectable — `ImageAnalysis.scores` names the signal that decided. No weights, no GPU, ~10 ms. |
+| Noise estimation | Immerkær Laplacian-of-Laplacian kernel | Blind, closed-form, no training data needed. |
+| Blur estimation | Variance of Laplacian + gradient statistics | Same. |
+| JPEG artefact estimation | Block-boundary discontinuity at the 8x8 grid | Directly measures the artefact rather than inferring it. |
+| Model selection | Threshold rules over the above, priority-ordered | A wrong route is the most visible failure mode; it needs to be explainable. |
+
+A learned classifier slots in behind the same `classify()` signature — the scores
+above are what it would be trained to reproduce.
 
 ---
 
@@ -321,19 +447,28 @@ browser. Each now has a regression test that asserts something about the *pixels
 ## Tests
 
 ```bash
-pytest                       # 67 tests, 2 skipped (DirectML/OpenVINO not installed here)
+pytest                       # 91 tests, 2 skipped (DirectML/OpenVINO not installed here)
 pytest -m "not weights"      # the subset needing no checkpoints and no GPU
 python scripts/verify_quality.py       # quality gate against ground truth
 
-cd frontend && node e2e-smoke.mjs      # drives the real UI in Chromium against the real backend
-cd desktop  && npm run e2e             # launches the real Electron app, runs a real job
-cd desktop  && npm run e2e:hotfolder   # drops a file in a watched folder, waits for the result
+python scripts/download_assets.py      # ground-truth photos; without them ~19 tests skip
+python scripts/make_e2e_fixtures.py    # build the generated inputs the e2e scripts upload
+
+cd frontend && node e2e-smoke.mjs       # drives the real UI in Chromium against the real backend
+cd frontend && node e2e-orientation.mjs # a phone photo (EXIF-rotated) survives the round trip
+cd desktop  && npm run e2e              # launches the real Electron app, runs a real job
+cd desktop  && npm run e2e:hotfolder    # drops a file in a watched folder, waits for the result
 ```
 
-The end-to-end tests are not decoration. Four of the bugs above were invisible to the
+The end-to-end tests are not decoration. Five of the bugs above were invisible to the
 Python suite and only appeared when something actually drove the app: three when a
-browser ran a job through a long-running server, and one when a file was dropped into a
-watched folder a moment too early.
+browser ran a job through a long-running server, one when a file was dropped into a
+watched folder a moment too early, and one that only a browser could see at all — the
+result was rotated by its own EXIF on the way to the screen, which nothing that
+inspects the pixel array in memory can detect.
+
+The browser scripts prefer Playwright's pinned Chromium and fall back to an installed
+Chrome or Edge if it will not start; `PW_CHANNEL=chrome|msedge|chromium` pins one.
 
 ---
 

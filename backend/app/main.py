@@ -8,6 +8,7 @@ Serves the engine over HTTP for the web frontend and the Electron desktop shell.
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -43,7 +44,7 @@ _ERROR_STATUS: dict[type[VisionSRError], int] = {
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from visionsr.core.device import summary
     from visionsr.inference.engine import _ensure_registry
 

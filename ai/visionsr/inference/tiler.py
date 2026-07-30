@@ -30,6 +30,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
 import numpy as np
+import numpy.typing as npt
 
 from ..backends.base import RunnableModel
 from ..core.config import get_settings
@@ -115,7 +116,7 @@ def _starts(extent: int, tile_size: int, stride: int) -> list[int]:
 
 
 def feather_mask(
-    h: int, w: int, overlap: int, tile: Tile, dtype: np.dtype = np.float32
+    h: int, w: int, overlap: int, tile: Tile, dtype: npt.DTypeLike = np.float32
 ) -> np.ndarray:
     """Per-pixel blend weight for one tile, shape (h, w, 1).
 
@@ -144,7 +145,7 @@ def feather_mask(
     return (wy[:, None] * wx[None, :])[:, :, None]
 
 
-def _cosine_ramp(length: int, dtype: np.dtype) -> np.ndarray:
+def _cosine_ramp(length: int, dtype: npt.DTypeLike) -> np.ndarray:
     """0 -> 1 over `length` samples, with zero slope at both ends."""
     if length <= 0:
         return np.ones(0, dtype=dtype)

@@ -1,0 +1,164 @@
+# Vulnerability and secret scanning.
+#
+# Four scanners, because they see different things and none subsumes another:
+#
+#   pip-audit / npm audit  — known CVEs in declared dependencies
+#   CodeQL                 — taint-tracking through our own code
+#   Gitleaks               — credentials committed by accident
+#   Trivy                  — the filesystem, including transitive lockfile entries
+#
+# The schedule matters as much as the trigger: a dependency that is clean today
+# acquires a CVE next month without a single line of this repo changing, so a scan
+# that only runs on push goes stale silently.
+
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Monday 06:00 UTC — a fresh report waiting at the start of the week.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  python-deps:
+    name: pip-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # The runner's own pip/setuptools are part of the audited environment and ship
+      # whatever the image was baked with — currently a setuptools carrying two
+      # advisories. Patch the build toolchain first, or this job reports a finding
+      # nothing in this repository can fix.
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e ".[api,onnx,metrics,dev]"
+          python -m pip install pip-audit
+
+      # Audits the resolved environment, not just the pins in pyproject: most real
+      # advisories land on a transitive dependency nobody wrote down.
+      #
+      # Deliberately not --strict. That flag fails the run when a package cannot be
+      # looked up on PyPI, and three always can't be: the editable install of this
+      # project, and torch/torchvision when they come from the PyTorch CUDA index
+      # with a `+cu118` local version. pip-audit still exits non-zero on an actual
+      # advisory, which is the thing this job is for; the skipped packages are
+      # printed in the report.
+      - name: Audit
+        run: pip-audit --desc --format=columns
+
+  node-deps:
+    name: npm audit (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [frontend, desktop]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # `--omit=dev` on purpose: a devDependency advisory is worth knowing about but
+      # is not a vulnerability in anything a user runs, and failing the build on one
+      # trains people to ignore this job. The full report is printed either way.
+      - name: Audit (production dependencies)
+        working-directory: ${{ matrix.app }}
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Report (all dependencies, informational)
+        if: always()
+        working-directory: ${{ matrix.app }}
+        run: npm audit || true
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+
+  secrets:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A secret is still leaked if it was removed in a later commit, so scan the
+          # history rather than the tip.
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  filesystem:
+    name: trivy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: sarif
+          output: trivy.sarif
+
+      # Upload before failing, or a CRITICAL finding produces a red tick and no
+      # detail of what it was.
+      - name: Upload to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy.sarif
+          category: trivy-fs
+
+      - name: Fail on CRITICAL/HIGH
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table

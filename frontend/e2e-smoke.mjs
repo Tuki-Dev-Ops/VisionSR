@@ -8,7 +8,7 @@
  *
  *   node e2e-smoke.mjs
  */
-import { chromium } from "playwright";
+import { launchBrowser } from "./e2e-browser.mjs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -27,7 +27,7 @@ const check = (name, ok, detail = "") => {
   if (!ok) failures.push(name);
 };
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 
 // Any uncaught client-side error is a failure, even if the UI still looks fine.

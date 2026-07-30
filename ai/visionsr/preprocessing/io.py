@@ -40,6 +40,9 @@ def load_image(source: Path | bytes | io.BytesIO) -> tuple[np.ndarray, dict[str,
         (image, metadata). Metadata carries ``exif``, ``icc_profile`` and ``format``
         so an export can round-trip them.
     """
+    # Annotated as the base class: what open() returns is an ImageFile, but the
+    # transpose and colour-conversion steps below hand back plain Images.
+    handle: PILImage.Image
     try:
         handle = PILImage.open(source if isinstance(source, Path) else io.BytesIO(_as_bytes(source)))
     except Exception as exc:
@@ -48,13 +51,19 @@ def load_image(source: Path | bytes | io.BytesIO) -> tuple[np.ndarray, dict[str,
     metadata: dict[str, Any] = {
         "format": handle.format,
         "mode": handle.mode,
-        "exif": handle.info.get("exif"),
         "icc_profile": handle.info.get("icc_profile"),
     }
 
     # Phones store orientation in EXIF rather than rotating pixels. Apply it now, or
     # the output comes out sideways.
     handle = ImageOps.exif_transpose(handle)
+
+    # Read the EXIF we carry to the export *after* the transpose, never before.
+    # exif_transpose strips the Orientation tag from the blob it hands back, and that
+    # blob is the only correct one: stamping the original tag onto pixels we have
+    # already rotated tells every viewer to rotate them a second time, so the result
+    # lands sideways next to the source it came from.
+    metadata["exif"] = handle.info.get("exif")
 
     handle = _to_srgb(handle, metadata)
 
@@ -87,16 +96,58 @@ def _to_srgb(handle: PILImage.Image, metadata: dict[str, Any]) -> PILImage.Image
         if ImageCms.getProfileDescription(src).strip().lower().startswith("srgb"):
             return handle
 
+        # profileToProfile can only emit RGB, so it drops an alpha channel on the
+        # floor without complaining — a cutout source would come back fully opaque.
+        # Alpha is not colour-managed anyway: lift it off, convert the colour, put
+        # it back.
+        alpha = handle.getchannel("A") if "A" in handle.getbands() else None
+
         converted = ImageCms.profileToProfile(
             handle, src, ImageCms.createProfile("sRGB"), outputMode="RGB"
         )
+        if converted is None:
+            return handle
+        if alpha is not None:
+            converted.putalpha(alpha)
+
         log.debug("converted %s -> sRGB", ImageCms.getProfileDescription(src).strip())
         # The pixels are sRGB now; keeping the old profile would double-convert on save.
         metadata["icc_profile"] = None
-        return converted or handle
+        return converted
     except Exception as exc:
         log.warning("ICC conversion failed (%s); treating input as sRGB", exc)
         return handle
+
+
+def _exif_for_output(blob: bytes | None, size: tuple[int, int]) -> bytes | None:
+    """Re-point a source EXIF block at the image we are about to write.
+
+    Enhancing changes the frame, and three things in the source block stop being true
+    the moment it does: Orientation (the pixels were uprighted at load), the embedded
+    IFD1 thumbnail (still the *source* frame, and file managers and photo apps show it
+    in preference to decoding the full image), and PixelXDimension/PixelYDimension
+    (still the source resolution, which readers use to report the image's size).
+
+    Round-tripping through Pillow's parser drops the thumbnail; the two tags that
+    survive are corrected here.
+    """
+    if not blob:
+        return None
+
+    try:
+        exif = PILImage.Exif()
+        exif.load(blob)
+        exif.pop(0x0112, None)  # Orientation — already applied to the pixels
+        exif_ifd = exif.get_ifd(0x8769)
+        if exif_ifd:
+            exif_ifd[0xA002] = size[0]  # PixelXDimension
+            exif_ifd[0xA003] = size[1]  # PixelYDimension
+        return exif.tobytes()
+    except Exception as exc:
+        # Malformed EXIF is common in the wild and is never worth failing an export
+        # over — the pixels are what the user asked for.
+        log.warning("could not rewrite EXIF for the output (%s); dropping it", exc)
+        return None
 
 
 def _check_size(image: np.ndarray) -> None:
@@ -146,8 +197,9 @@ def save_image(
         params["method"] = 6
 
     if preserve_exif and metadata:
-        if metadata.get("exif"):
-            params["exif"] = metadata["exif"]
+        exif = _exif_for_output(metadata.get("exif"), handle.size)
+        if exif:
+            params["exif"] = exif
         if metadata.get("icc_profile"):
             params["icc_profile"] = metadata["icc_profile"]
 
@@ -176,8 +228,16 @@ def encode_image(
         params["quality"] = int(quality)
     if fmt == "jpeg":
         params["subsampling"] = 0
-    if metadata and metadata.get("exif"):
-        params["exif"] = metadata["exif"]
+    if metadata:
+        exif = _exif_for_output(metadata.get("exif"), handle.size)
+        if exif:
+            params["exif"] = exif
+        # Only ever set when we chose *not* to convert (``_to_srgb`` clears it once the
+        # pixels are sRGB). Dropping it here would leave the browser to guess sRGB for
+        # pixels that are not, and the result would come back off-colour beside the
+        # original it is being compared against.
+        if metadata.get("icc_profile"):
+            params["icc_profile"] = metadata["icc_profile"]
 
     handle.save(buffer, format=fmt.upper(), **params)
     return buffer.getvalue()

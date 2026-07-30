@@ -22,7 +22,7 @@ import asyncio
 import logging
 import time
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
@@ -216,7 +216,9 @@ class JobManager:
         self._executor.shutdown(wait=False, cancel_futures=True)
 
 
-def _enhance_blocking(job: Job, on_progress) -> tuple[EnhanceResult, bytes, str]:
+def _enhance_blocking(
+    job: Job, on_progress: Callable[[str, float], None]
+) -> tuple[EnhanceResult, bytes, str]:
     """The actual work. Runs on a worker thread."""
     from visionsr.inference.engine import get_engine
     from visionsr.preprocessing.io import encode_image, load_image

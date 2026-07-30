@@ -441,6 +441,11 @@ export function CompareCanvas({
       top: 0,
       width: `${display.width}px`,
       height: `${display.height}px`,
+      // Both layers share the result's box so they stay aligned under the divider,
+      // which for a plain N-times upscale is exactly a scale. If the two ever
+      // disagree on aspect ratio, "contain" letterboxes the odd one out instead of
+      // silently stretching it — a distorted original reads as a bad result.
+      objectFit: "contain",
       transformOrigin: "0 0",
       transform: `translate3d(${container.width / 2 + view.x - w / 2}px, ${
         container.height / 2 + view.y - h / 2
