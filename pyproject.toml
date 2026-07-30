@@ -12,7 +12,10 @@ license = { text = "Apache-2.0" }
 
 dependencies = [
     "numpy>=1.26",
-    "pillow>=10.3",
+    # Floor is a security boundary, not a compatibility one: this package decodes
+    # whatever image a user hands the API, so a Pillow decoder CVE is directly
+    # reachable from untrusted input. 12.3.0 closes 20 advisories present in 12.2.0.
+    "pillow>=12.3",
     "opencv-python-headless>=4.10",
     "pydantic>=2.7",
     "pydantic-settings>=2.3",
@@ -33,6 +36,10 @@ api = [
 onnx = [
     "onnx>=1.16",
     "onnxruntime>=1.18",
+    # The fp16 conversion in exporters/onnx_exporter.py imports this directly. Without
+    # it every torch model fails to export, and the packaged app -- which ships no
+    # PyTorch and so cannot make a graph itself -- has nothing to run.
+    "onnxconverter-common>=1.14",
 ]
 directml = ["onnxruntime-directml>=1.18"]
 openvino = ["openvino>=2024.2"]
